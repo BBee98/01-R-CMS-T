@@ -7,16 +7,19 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
+    "node": "^25.6.1",
+    "nodemon": "^3.1.11",
+    "parcel": "^2.16.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "start": "parcel",
+    "build": "parcel build",
+    "test": "jest",
+    "lint": "eslint src",
+    "scrapping": "node ssr/index.js"
   },
   "eslintConfig": {
     "extends": [
@@ -35,5 +38,15 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "devDependencies": {
+    "babel-jest": "^27.4.2",
+    "babel-preset-react-app": "^10.0.1",
+    "eslint": "^8.3.0",
+    "eslint-config-react-app": "^7.0.1",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^27.4.3",
+    "jest-watch-typeahead": "^1.0.0"
+  },
+  "source": "public/index.html"
 }
