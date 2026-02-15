@@ -5,11 +5,9 @@ let server = null;
 let client = null;
 
 (async function Start() {
-    server = node_net.createServer(({req, res}) => {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-    });
-    server.listen(4500);
-    client = node_net.createConnection(4500);
-    node_childProcess.exec("open http://localhost:3000")
+    server = node_net.createServer();
+    server.listen(4998);
+    client = node_net.createConnection(4998);
+    node_childProcess.exec("open http://localhost:4998")
 
 })();

@@ -80,8 +80,8 @@ puerto de la máquina.
 
 ‼️ ``createServer`` es una función que existe en dos librerías: ésta (`net`) y en `http`. La diferencia entre una y otra reside en el **segundo argumento**. 
 
-`createServer` de `http` => ``http.createServer([options][, requestListener])``
-`createServer` de `net` => ``net.createServer([options][, connectionListener])``
+`createServer` de 🔗 [`http`](https://nodejs.org/docs/v24.13.1/api/http.html#httpcreateserveroptions-requestlistener) => ``http.createServer([options][, requestListener])``
+`createServer` de 🔗 [`net`](https://nodejs.org/docs/v24.13.1/api/net.html#netcreateserveroptions-connectionlistener) => ``net.createServer([options][, connectionListener])``
 
 ☝️ Para la librería de testing, como lo que buscamos es crear una comunicación entre cliente-servidor (desde cliente, darle instrucciones; desde servidor, escucharlas) necesitamos utilizar la función proveniente de la librería
 ``net``, porque ``createClient`` es quien nos da un objeto de tipo ``connectionListener``.
