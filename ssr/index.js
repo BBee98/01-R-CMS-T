@@ -1,5 +1,5 @@
-import node_childProcess from "node:child_process";
-import node_net from "node:net";
+let node_childProcess = require("node:child_process");
+let node_net = require("node:net");
 
 let server = null;
 let client = null;
