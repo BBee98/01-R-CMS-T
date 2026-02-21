@@ -19,6 +19,10 @@ Lo llamaremos scrapping porque vamos a crearlo con la intención de hacer _scrap
 
 # Funciones de node
 
+## ```node:buffer```
+
+> 🌏 https://nodejs.org/docs/latest/api/buffer.html#buffer
+
 ## ``node:child_process``
 
 Esta librería nos permite **ejecutar instrucciones de terminal**, tales como ``ls``, `mkdir`, etc.
