@@ -19,8 +19,8 @@
     "build": "parcel build",
     "test": "jest",
     "lint": "eslint src",
-    "componetize": "node ssr/compileComponents.js --env-file=.env",
-    "scrapping": "node ssr/compileComponents.js ssr/index.js"
+    "componetize": "node ssr/funcs/read-components.js --env-file=.env",
+    "scrapping": "node ssr/funcs/read-components.js ssr/index.js"
   },
   "eslintConfig": {
     "extends": [

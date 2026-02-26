@@ -204,7 +204,7 @@ Permite obtener **todos los argumentos** mandados por la terminal. Llegan en for
 Por ejemplo:
 
 ```bash
-node ssr/compileComponents.js --env-file=.env
+node ssr/read-components.js --env-file=.env
 ```
 
 Obtendrías algo como:
@@ -212,7 +212,7 @@ Obtendrías algo como:
 ````bash
 [
   '[directorio]/node_modules/node/bin/node',
-  '[directorio]/ssr/compileComponents.js',
+  '[directorio]/ssr/read-components.js',
   '--env-file=.env'
 ]
 ````

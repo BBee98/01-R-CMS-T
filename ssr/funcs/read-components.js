@@ -1,15 +1,18 @@
-const g__node_process = require("node:process");
-const g__node_childProcess = require("node:child_process");
-const g__node_asyncFs = require("node:fs/promises");
-const { ENVIRONMENTS, EXTENSION_CSS_FILES, EXTENSION_JS_FILES} = require("./constants");
+/**
+ * IMPORTS
+ */
+
+const { ENVIRONMENTS} = require("../core/constants");
+const { render__components } = require("./render-environment");
 
 /**
  * GLOBAL VARIABLES
  */
 
+const g__node_process = require("node:process");
+const g__node_asyncFs = require("node:fs/promises");
 const g__envs = Object.create({});
 const g__rootFile = g__node_process.cwd();
-
 
 (async function(){
     let envFile = Get__envFile();
@@ -18,9 +21,8 @@ const g__rootFile = g__node_process.cwd();
     if(!fileComponents){
         throw new Error("Missing components folder. Please provide a components folder with your components")
     }
-    Render__Components(fileComponents);
-    g__node_childProcess.execSync("react-scripts start");
-
+    const components = await Read__fileComponents(fileComponents);
+    render__components(components);
 })()
 
 
@@ -82,9 +84,17 @@ async function Read__Components(){
     });
 }
 
-async function Render__Components(fileComponents){
-    for (const file of fileComponents) {
-        const fileDirectory = `${file.parentPath}/${file.name}`;
-        const code = await g__node_asyncFs.readFile(fileDirectory, { encoding: "utf-8"});
-    }
+async function Read__fileComponents(fileComponents){
+    const components = [];
+    return new Promise(async (resolve) => {
+        for (const file of fileComponents) {
+            const fileDirectory = `${file.parentPath}/${file.name}`;
+            const code = await g__node_asyncFs.readFile(fileDirectory, { encoding: "utf-8"});
+            components.push({
+                name: file.name,
+                code
+            });
+        }
+        resolve(components);
+    })
 }
