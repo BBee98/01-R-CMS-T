@@ -1,7 +1,9 @@
-export const ENVIRONMENTS = [
+const ENVIRONMENTS = [
     "REPOSITORY_COMPONENTS_FOLDER",
     "REPOSITORY_COMPONENTS_FILE"
 ]
 
-export const EXTENSION_JS_FILES = [".js", ".jsx", ".ts", ".tsx"];
-export const EXTENSION_CSS_FILES = [".css"];
+const EXTENSION_JS_FILES = [".js", ".jsx", ".ts", ".tsx"];
+const EXTENSION_CSS_FILES = [".css"];
+
+module.exports = { ENVIRONMENTS, EXTENSION_JS_FILES, EXTENSION_CSS_FILES };
