@@ -1,13 +1,23 @@
 let node_childProcess = require("node:child_process");
-let node_net = require("node:net");
+let node_http = require("node:http");
 
-let server = null;
-let client = null;
+const {readComponents: c, readEnvs: e} = require('./funcs');
 
 (async function Start() {
-    server = node_net.createServer();
-    server.listen(4998);
-    client = node_net.createConnection(4998);
-    node_childProcess.exec("open http://localhost:4998")
+    await e.Prepare__Environment();
+    const clientComponents = await c.Prepare__Components();
+    const server = node_http.createServer((request, response) => {
+        response.end(`
+        <!DOCTYPE html>
+<html lang="en">
+ <body>
+ 
+</body>
+</html>`)
+    });
+    await server.listen(4998, () => {
+
+    });
+    node_childProcess.exec("open http://localhost:4998");
 
 })();
