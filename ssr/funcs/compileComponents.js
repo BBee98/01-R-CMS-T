@@ -1,7 +1,7 @@
 const g__node_process = require("node:process");
 const g__node_childProcess = require("node:child_process");
 const g__node_asyncFs = require("node:fs/promises");
-const { ENVIRONMENTS, EXTENSION_CSS_FILES, EXTENSION_JS_FILES} = require("./constants");
+const { ENVIRONMENTS, EXTENSION_CSS_FILES, EXTENSION_JS_FILES} = require("../constants");
 
 /**
  * GLOBAL VARIABLES

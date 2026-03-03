@@ -15,9 +15,11 @@ const {readComponents: c, readEnvs: e} = require('./funcs');
 </body>
 </html>`)
     });
+/*
     await server.listen(4998, () => {
 
     });
     node_childProcess.exec("open http://localhost:4998");
+*/
 
 })();
