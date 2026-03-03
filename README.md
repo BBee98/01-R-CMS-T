@@ -20,68 +20,93 @@
 > _A web bundler is a tool or software utility used in web development whose primary purpose is to improve the performance of web applications._
 > 🌏 [Harshit Kumar](https://medium.com/@geraharshitkumar/parcel-js-a-bundler-to-fall-in-love-with-b08203760054)# 01-R-CMS-T
 
-# Desarrollo de la herramienta de Testing
+---
 
-## Arquitectura: cliente y servidor
+# Arquitectura de testing de componentes (`ssr/`)
 
-La herramienta se divide en dos partes con responsabilidades claramente separadas:
+Su objetivo es testear componentes web (React y JavaScript vanilla) sin dependencias externas ni frameworks de testing.
 
-**Servidor (Node.js)**
-- Orquesta el proceso de testing
-- Lee los ficheros `.clue.js` del proyecto del cliente
-- Transpila los componentes React a JavaScript vanilla
-- Envía las instrucciones al cliente
-- Recibe los datos en crudo del cliente y aplica la lógica de comparación
-- Determina PASS o FAIL y muestra los resultados
+## Principio fundamental de la librería
 
-**Cliente (browser)**
-- Actúa como _thin client_: ejecuta lo mínimo necesario
-- Renderiza los componentes (cuando es necesario, por ejemplo para hooks)
-- Ejecuta las queries al DOM
-- Reporta los datos en crudo al servidor — nunca decide si un test pasa o falla
+Todo lo que es **genérico o core** vive en el servidor (Node). El navegador actúa únicamente como ejecutor mínimo de DOM.
 
-El cliente **no contiene lógica de testing**. Solo recolecta y reporta.
+| Capa | Responsabilidad |
+|---|---|
+| **Librería (servidor Node)** | Define los tipos de test, genera los scripts del navegador, compara resultados, reporta PASS/FAIL |
+| **Proyecto (`.clue.js`)** | Declara de forma descriptiva qué se quiere testear |
+| **Navegador** | Ejecuta queries de DOM, recoge datos crudos, los envía al servidor |
 
-## Cluebee: la librería de testing
+## Flujo de un test
 
-La herramienta de testing se llamará provisionalmente **Cluebee** y será una librería **instalable vía npm** por cualquier proyecto cliente.
-
-El proyecto cliente la integrará como dependencia de desarrollo:
-
-```bash
-npm install --save-dev cluebee
+```
+1. Servidor lee el componente y su archivo .clue.js
+2. Servidor genera el HTML: componente montado + script mínimo de recogida de datos
+3. Navegador recibe el HTML y lo renderiza
+4. Script ejecuta la acción (click, input...) y recoge el dato crudo del DOM
+5. Navegador envía el dato crudo al servidor via POST /test-result
+6. Servidor aplica la lógica del tipo de test y compara con el valor esperado
+7. Servidor imprime el resultado: PASS o FAIL
 ```
 
-Una vez instalada, el proyecto cliente crea ficheros `.clue.js` que declaran **qué** se quiere testear, sin necesidad de saber **cómo** funciona la librería internamente:
+## Rutas del servidor
+
+No existe una ruta por test ni por componente. Las rutas son genéricas:
+
+```
+GET  /component/:nombre   →  sirve el HTML con el componente + script de recogida
+POST /test-result         →  recibe datos crudos del navegador y determina el veredicto
+```
+
+El nombre del test y el tipo de aserción viajan dentro del body del POST, no en la URL.
+
+## Cómo se define un test en el proyecto
+
+Los archivos `.clue.js` son **declarativos**: solo describen qué testear. No contienen lógica de cómo hacerlo, eso lo resuelve la librería.
 
 ```js
-// src/components/Button/Button.clue.js
-export default {
-  component: Button,
-  tests: [
-    { action: { type: 'click', selector: 'button' }, expect: { selector: '#result', text: 'Enviado' } }
-  ]
-}
+// src/components/Accordion/Accordion.clue.js
+module.exports = [
+  {
+    type: "checkText",           // tipo genérico definido en la librería
+    action: { click: ".accordion-header" },
+    selector: ".accordion-body",
+    expected: "foo"
+  },
+  {
+    type: "isClickable",         // otro tipo genérico de la librería
+    selector: ".btn-close"
+  }
+]
 ```
 
-La lógica del _cómo_ (ejecutar el click, comparar el resultado, determinar PASS/FAIL) la resuelve Cluebee, no el proyecto cliente.
+## Tipos de test genéricos (definidos en la librería)
 
-## Tests genéricos
+>>> POR CORREGIR 
+Los tipos de test son responsabilidad de `ssr/`. Cada tipo sabe:
+- Qué query de DOM hay que hacer en el navegador para recoger el dato
+- Cómo comparar el dato recibido con el valor esperado
+<<<<
 
-Los tests genéricos viven dentro de **Cluebee**, no en el proyecto cliente. Son tests reutilizables que cubren los casos comunes de cualquier componente:
+Ejemplos de tipos previstos:
 
-- Comprobar que un botón contiene un texto o icono determinado
-- Comprobar que los handlers (`onClick`, `onChange`...) existen y se ejecutan
-- Comprobar que elementos de contenido (`p`, `h1`-`h6`) contienen el texto correcto
-- Comprobar que elementos se muestran u ocultan según el estado
-
-El proyecto cliente **no reimplementa** estos tests: simplemente declara qué quiere verificar en sus `.clue.js` y Cluebee aplica el test genérico correspondiente.
-
-### Separación por tipo de test
-
-Dentro de Cluebee, los tests genéricos se separan según lo que necesitan para ejecutarse:
-
-| Módulo | Qué testea | Necesita React runtime |
+| Tipo | Qué recoge el navegador | Qué compara el servidor |
 |---|---|---|
-| `tests/Events.js` | Handlers (`onClick`, etc.) sobre el elemento transpilado | No |
-| `tests/Hooks.js` | Efectos de hooks observados en el DOM renderizado | Sí |
+| `checkText` | `element.textContent` | igualdad de cadenas (trim) |
+| `isClickable` | `!element.disabled && element.offsetParent !== null` | booleano |
+| `isVisible` | `element.offsetParent !== null` | booleano |
+| `checkAttribute` | `element.getAttribute(attr)` | igualdad de cadenas |
+
+## Separación cliente / librería
+
+El script que corre en el navegador lo **genera la librería en el servidor**. El proyecto nunca escribe código que vaya al navegador: solo escribe archivos `.clue.js` declarativos.
+
+```
+src/components/Accordion/
+  Accordion.jsx        ← el componente
+  Accordion.clue.js    ← la declaración del test (qué, no cómo)
+
+ssr/
+  core/               ← tipos de test, lógica de comparación, generador de scripts
+  funcs/              ← lectura de componentes, lectura de tests, renderizado
+  index.js            ← servidor HTTP
+```

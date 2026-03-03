@@ -168,17 +168,52 @@ Esta librería nos permite crear conexiones desde lado cliente y desde lado serv
 > 🌏 createConnection: https://nodejs.org/docs/v24.13.1/api/net.html#netcreateconnection
 
 Las funciones ``createServer`` y ``createConnection`` permiten crear y escuchar, consecuentemente, un servidor. Mediante la función `createServer` podemos crear (o levantar) un servidor, utilizando para ello un
-puerto de la máquina. 
+puerto de la máquina.
 
-> 💭 Piensa en ello como si fuera la función ``server.listen()`` que se utiliza cuando creamos un backend con nodejs + express o fastify.
+‼️ ``createServer`` es una función que existe en dos librerías: ésta (`net`) y en `http`. 
+El servidor generado por ambas librerías soportan los protocolos `TCP` y `UDP`
 
-‼️ ``createServer`` es una función que existe en dos librerías: ésta (`net`) y en `http`. La diferencia entre una y otra reside en el **segundo argumento**. 
+> 💁🏻‍♂️ ¿Cuál es la diferencia entre el protocolo TCP y el protocolo UDP?
+> 🌏 https://www.avast.com/es-es/c-tcp-vs-udp-difference
+> Básicamente, el TCP es un protocolo que, cuando envía los datos, escucha al receptor para saber si estos datos **llegaron bien**, mientras que el UDP se desentiende de ello.
+> Eso hace que el protocolo TCP sea **más lento** y que el UDP sea **más rápido**, pero a la vez ocasiona que algún paquete de información no llega cuando usamos el protocolo UDP, éste se pierda, mientras
+> que en el TCP se vuelve a enviar.
 
-`createServer` de 🔗 [`http`](https://nodejs.org/docs/v24.13.1/api/http.html#httpcreateserveroptions-requestlistener) => ``http.createServer([options][, requestListener])``
-`createServer` de 🔗 [`net`](https://nodejs.org/docs/v24.13.1/api/net.html#netcreateserveroptions-connectionlistener) => ``net.createServer([options][, connectionListener])``
+> 💁🏻‍️ ¿Cuál es la diferencia entre usar ``createServer`` desde la librería `net` y usarla desde `http`?
+> 
+> La diferencia es que ``net`` crea un servidor **que no usa protocolo http**, por lo que todas las acciones que quieras **hacer desde un navegador, no funcionarán**. Para que funcionen,
+> debes crear un servidor que **tenga** protocolo http.
+> 
+> ☝️ Es cierto que podrías configurar manualmente el protocolo con ``createSerer`` de `net`, pero `http` ya realiza esa acción y resulta más sencillo de usar.
+> 
+> Además, si te fijas en la documentación y los parámetros que reciben:
+> 
+> `createServer` de 🔗 [`http`](https://nodejs.org/docs/v24.13.1/api/http.html#httpcreateserveroptions-requestlistener) => ``http.createServer([options][, requestListener])``
+> `createServer` de 🔗 [`net`](https://nodejs.org/docs/v24.13.1/api/net.html#netcreateserveroptions-connectionlistener) => ``net.createServer([options][, connectionListener])``
+ 
 
-☝️ Para la librería de testing, como lo que buscamos es crear una comunicación entre cliente-servidor (desde cliente, darle instrucciones; desde servidor, escucharlas) necesitamos utilizar la función proveniente de la librería
-``net``, porque ``createClient`` es quien nos da un objeto de tipo ``connectionListener``.
+🧏🏻‍♂️ Para la librería de testing, como lo que buscamos es un servidor con protocolo ``http``, necesitamos usar la de la librería `http`:
+
+````javascript
+let node_childProcess = require("node:child_process");
+let node_http = require("node:http");
+
+let server = null;
+let client = null;
+
+const { readComponents: c, readEnvs: e } = require('./funcs');
+
+(async function Start() {
+    await e.Prepare__Environment();
+    const clientComponents = await c.Prepare__Components();
+    server = node_http.createServer((req, res) => {
+
+    });
+    await server.listen(4998);
+    node_childProcess.exec("open http://localhost:4998")
+})();
+````
+
 
 ## ``node:process``
 
@@ -204,7 +239,7 @@ Permite obtener **todos los argumentos** mandados por la terminal. Llegan en for
 Por ejemplo:
 
 ```bash
-node ssr/compileComponents.js --env-file=.env
+node ssr/readComponents.js --env-file=.env
 ```
 
 Obtendrías algo como:
@@ -212,7 +247,7 @@ Obtendrías algo como:
 ````bash
 [
   '[directorio]/node_modules/node/bin/node',
-  '[directorio]/ssr/compileComponents.js',
+  '[directorio]/ssr/readComponents.js',
   '--env-file=.env'
 ]
 ````
