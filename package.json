@@ -21,7 +21,8 @@
     "build": "parcel build",
     "test": "jest",
     "lint": "eslint src",
-    "scrapping": "node ssr/index.js --env-file=.env"
+    "scrapping": "node ssr/index.js --env-file=.env",
+    "build:globals": "parcel build ssr/client/globals.js --dist-dir ssr/client/dist --no-source-maps"
   },
   "eslintConfig": {
     "extends": [

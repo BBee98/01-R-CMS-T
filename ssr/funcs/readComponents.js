@@ -36,6 +36,7 @@ async function Read__fileComponents(fileComponents){
     return new Promise(async (resolve) => {
         for (const file of fileComponents) {
             const fileDirectory = `${file.parentPath}/${file.name}`;
+            console.log("file", file)
             const code = await g__node_asyncFs.readFile(fileDirectory, { encoding: "utf-8"});
             components.push({
                 name: file.name,
@@ -59,9 +60,12 @@ async function Read__folderComponents(){
                 const componentFolder = `${file.parentPath}/${file.name}`;
                 const filesFromFolder = await g__node_asyncFs.readdir(componentFolder, { withFileTypes: true });
                 for (const f of filesFromFolder) {
-                    const fileName = f.name;
-                    if(fileName.endsWith(".tsx") || fileName.endsWith(".ts") || fileName.endsWith(".jsx") || fileName.endsWith(".js") || fileName.endsWith(".css")){
-                        components.push(f);
+                    const { name, ...props } = f;
+                    if(name.endsWith(".tsx") || name.endsWith(".ts") || name.endsWith(".jsx") || name.endsWith(".js") || name.endsWith(".css")){
+                        components.push({
+                            name: name,
+                            ...props
+                        });
                     }
                 }
             }

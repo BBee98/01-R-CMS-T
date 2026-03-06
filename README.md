@@ -110,3 +110,15 @@ ssr/
   funcs/              ← lectura de componentes, lectura de tests, renderizado
   index.js            ← servidor HTTP
 ```
+
+## Problemas encontrados
+
+### ``exports is not defined``, ``require is not defined``
+
+👩🏼‍🏫‍ **Esto ocurre** porque ``react 19`` está basado en **CommonJS**, lo cual **no es comprensible por el navegador**.
+Añadir ``type module`` a la etiqueta `script` no servirá, porque el código de react está en formato `CommonJS` (como mencionamos antes), y `module` solo sirve
+para javascript basado en ``node``.
+
+
+💁🏻‍♂️ **Cómo arreglarlo**: hay que **parsear el código javascript**, ya sea con ``parcel``, `webkit` o `babel` para crear un código comprensible para el navegador.
+
