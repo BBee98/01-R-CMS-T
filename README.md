@@ -113,7 +113,7 @@ ssr/
 
 ## Problemas encontrados
 
-### ``exports is not defined``, ``require is not defined``
+### ``exports is not defined`` y ``require is not defined``
 
 👩🏼‍🏫‍ **Esto ocurre** porque ``react 19`` está basado en **CommonJS**, lo cual **no es comprensible por el navegador**.
 Añadir ``type module`` a la etiqueta `script` no servirá, porque el código de react está en formato `CommonJS` (como mencionamos antes), y `module` solo sirve
@@ -121,4 +121,20 @@ para javascript basado en ``node``.
 
 
 💁🏻‍♂️ **Cómo arreglarlo**: hay que **parsear el código javascript**, ya sea con ``parcel``, `webkit` o `babel` para crear un código comprensible para el navegador.
+
+### El directorio UMD: React version > v18
+
+React siempre ha dividido sus módulos de uso en 2 carpetas principales: ``umd`` y ``cjs``.
+
+- ``umd`` es la carpeta utilizada en el entorno de **desarrollo**.
+- ``cjs`` es la carpeta utilizada en el entorno de **producción**.
+
+> ☝️ Cuando implementamos React en nuestros proyectos, la propia librería utiliza una u otra dependiendo del entorno que detecta en las variables de entorno.
+> Sin embargo, en este proyecto, donde buscamos minimizar el número de dependencias lo máximo posible, encontraremos un "problema".
+
+Las versiones de react superiores a v18 **no incluyen** el directorio de ``umd``, puesto que éste se eliminó en favor de un desarrollo más **homogéneo**. 
+Como la librería de testing pretende tener el mínimo de dependencias, la solución ideal sería importar la librería de react en los ``scripts`` del html generado para servir en el servidor,
+pero se utilizan términos como ``export`` o `process` que dan los siguientes problemas:
+
+☝️ [Aquí se explica más en profundidad](#exports-is-not-defined-y-require-is-not-defined)
 

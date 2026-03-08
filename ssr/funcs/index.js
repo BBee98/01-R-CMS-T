@@ -1,5 +1,5 @@
 const readEnvs = require('./readEnvs');
 const readComponents = require('./readComponents');
-const writeComponents = require('./writeComponents');
+const renderComponents = require('./renderComponents');
 
-module.exports = { readEnvs, readComponents, writeComponents };
+module.exports = { readEnvs, readComponents, renderComponents };

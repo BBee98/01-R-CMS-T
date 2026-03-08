@@ -1,11 +1,10 @@
-const { ENVIRONMENTS} = require("../core/constants");
+const { ENVIRONMENTS, OPTIONAL_ENVIRONMENTS} = require("../core/constants");
 
-const g__nodePath = require("node:path");
 const g__node_process = require("node:process");
-
 const g__node_asyncFs = require("node:fs/promises");
-const g__envs = Object.create({});
 const g__rootFile = g__node_process.cwd();
+
+const g__envs = Object.create({});
 
 
 async function Prepare__Environment(){
@@ -33,17 +32,26 @@ async function Read__envFile(envFile){
     envsFromContent.forEach(env => {
         const [key, value] = env.trim().split("=");
         const envVarKeyExists = ENVIRONMENTS.includes(key);
+        const optionalEnvVarKeyExists = OPTIONAL_ENVIRONMENTS.includes(key);
         const envVarValueExists = (!!value && value.length > 0);
-        if(envVarKeyExists && envVarValueExists){
+        if(optionalEnvVarKeyExists && envVarValueExists){
             Object.assign(g__envs, {[key]: value.replace(/"/g, '')});
         } else {
-            if(!envVarKeyExists){
-                console.error(`Missing environment variable ${key}`);
-            }
-            if(!envVarValueExists){
-                console.error(`Missing value for environment variable ${key}`);
+            if(envVarKeyExists && envVarValueExists){
+                Object.assign(g__envs, {[key]: value.replace(/"/g, '')});
+            } else {
+                if(!envVarKeyExists){
+                    console.log("key", key)
+                    throw new Error(`Missing environment variable ${key}`);
+                }
+                if(!envVarValueExists){
+                    throw new Error(`Missing value for environment variable ${key}`);
+                }
             }
         }
+    })
+    Object.assign(g__envs, {
+        URL_COMPONENTS_FOLDER: `${g__rootFile}/src/${g__envs.REPOSITORY_COMPONENTS_FOLDER}`,
     })
 }
 
