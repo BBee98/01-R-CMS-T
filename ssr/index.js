@@ -7,8 +7,8 @@ const {readComponents: c, readEnvs: e, renderComponents: r} = require('./funcs')
     await e.Prepare__Environment();
     const mountedClientComponents = await c.Prepare__Components();
     let html = ""
+        console.log("Rendering component", mountedClientComponents)
     for(const c of mountedClientComponents){
-
         html = await r.Generate__ComponentHTML({
             componentName: c.name,
             componentScript: c.source
