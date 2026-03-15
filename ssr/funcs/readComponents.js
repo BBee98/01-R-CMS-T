@@ -11,25 +11,11 @@ const {g__envs, g__rootFile} = require("./readEnvs");
 
 const g__node_asyncFs = require("node:fs/promises");
 const g__node_fs = require("node:fs");
-const g__nodePath = require("node:path");
-const g__node_process = require("node:process");
-const g__nodeModulesPath = g__nodePath.join(g__node_process.cwd(), "node_modules")
-const React = require(g__nodeModulesPath + "/react");
-const node_childProcess = require("node:child_process");
 
-/**
- * TODO remove when convert into independent library
- */
-const sucrase = require(g__nodeModulesPath + "/sucrase");
 const {react__Mount} = require("./react__mount");
 
-/**
- *
- */
-
 async function Prepare__Components() {
-    const fileComponents = await Get__Components();
-    // return await Mount__Components(fileComponents);
+    await Get__Components();
 }
 
 async function Get__Components() {
@@ -57,7 +43,7 @@ async function Fetch__folderComponents(componentsFolder) {
             for (const f of filesFromFolder) {
                 const {name, parentPath} = f;
                 if (name.endsWith(".tsx") || name.endsWith(".ts") || name.endsWith(".jsx") || name.endsWith(".js") || name.endsWith(".css")) {
-                    react__Mount({
+                    await react__Mount({
                         fileName: name,
                         componentFolder: parentPath,
                     });
@@ -85,7 +71,7 @@ async function Fetch__fileComponents(components, componentsFolder) {
     if (file.length === 0) {
         throw new Error("No components found");
     }
-    react__Mount({fileName: name, componentFolder: componentsFolder});
+    await react__Mount({fileName: name, componentFolder: componentsFolder});
 }
 
 
