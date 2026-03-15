@@ -15,23 +15,24 @@ const g__node_fs = require("node:fs");
 const {react__Mount} = require("./react__mount");
 
 async function Prepare__Components() {
-    await Get__Components();
+    const components = []
+    return await Get__Components(components);
 }
 
-async function Get__Components() {
+async function Get__Components(components) {
     const hasComponentsFile = !!g__envs.REPOSITORY_COMPONENTS_FILE;
 
     if (hasComponentsFile) {
         const componentsFolder = `${g__rootFile}/src/${g__envs.REPOSITORY_COMPONENTS_FOLDER}/${g__envs.REPOSITORY_COMPONENTS_FILE}`;
-        await Fetch__fileComponents(componentsFolder);
+        await Fetch__fileComponents(components, componentsFolder);
     } else {
         const componentsFolder = `${g__rootFile}/src/${g__envs.REPOSITORY_COMPONENTS_FOLDER}`;
-        await Fetch__folderComponents(componentsFolder);
+        await Fetch__folderComponents(components, componentsFolder);
     }
+    return components;
 }
 
-async function Fetch__folderComponents(componentsFolder) {
-
+async function Fetch__folderComponents(components, componentsFolder) {
     const files = await g__node_asyncFs.readdir(componentsFolder, {withFileTypes: true});
     if (!files || files?.length === 0) {
         throw new Error("No components found");
@@ -44,13 +45,14 @@ async function Fetch__folderComponents(componentsFolder) {
                 const {name, parentPath} = f;
                 if (name.endsWith(".tsx") || name.endsWith(".ts") || name.endsWith(".jsx") || name.endsWith(".js") || name.endsWith(".css")) {
                     await react__Mount({
-                        fileName: name,
+                        components,
                         componentFolder: parentPath,
                     });
                 }
             }
         }
     }
+    return components;
 }
 
 async function Fetch__fileComponents(components, componentsFolder) {
@@ -71,7 +73,7 @@ async function Fetch__fileComponents(components, componentsFolder) {
     if (file.length === 0) {
         throw new Error("No components found");
     }
-    await react__Mount({fileName: name, componentFolder: componentsFolder});
+    await react__Mount({components, componentFolder: componentsFolder});
 }
 
 
