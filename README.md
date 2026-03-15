@@ -22,6 +22,54 @@
 
 ---
 
+# Convertir jsx o tsx en código legible por el navegador
+
+Para que el navegador pueda ejecutar componentes escritos en JSX o TSX, es necesario transpilarlo a JavaScript estándar.
+La herramienta elegida es **esbuild**, por su velocidad y soporte nativo de JSX/TSX sin configuración adicional.
+
+## Uso básico con esbuild
+
+```js
+const esbuild = require('esbuild');
+
+const result = await esbuild.build({
+  entryPoints: ['componente.jsx'], // o .tsx
+  bundle: true,
+  write: false,
+  format: 'iife',
+  platform: 'browser',
+  outdir: 'dist',
+});
+
+const code = result.outputFiles[0].text;
+```
+
+## Por qué `bundle: true`
+
+Cuando se usa `format: 'iife'`, esbuild envuelve el código en una función autoejecutada:
+
+```js
+(() => {
+  // código del componente
+})();
+```
+
+Este formato **no expone `require` ni `import`** al scope global, por lo que si el componente importa dependencias (como React), esbuild necesita resolverlas e incluirlas en el mismo fichero de salida. De lo contrario, el navegador no sabría de dónde obtenerlas.
+
+`bundle: true` le indica a esbuild que debe **rastrear y empaquetar todas las dependencias** del punto de entrada en un único output. Sin él, los `import` quedarían como referencias sin resolver y el código fallaría en el navegador.
+
+## Por qué `outdir` en lugar de `outfile`
+
+Cuando se usa `bundle: true` con múltiples entry points, esbuild requiere `outdir` en lugar de `outfile`, ya que puede generar varios ficheros de salida. Aunque se use un solo entry point, `outdir` es la opción recomendada para mantener consistencia:
+
+```js
+outdir: 'dist', // esbuild escribe el resultado en dist/componente.js
+```
+
+Si se combina con `write: false`, `outdir` se ignora y el resultado se obtiene directamente en memoria a través de `result.outputFiles`.
+
+---
+
 # Arquitectura de testing de componentes (`ssr/`)
 
 Su objetivo es testear componentes web (React y JavaScript vanilla) sin dependencias externas ni frameworks de testing.
@@ -30,11 +78,11 @@ Su objetivo es testear componentes web (React y JavaScript vanilla) sin dependen
 
 Todo lo que es **genérico o core** vive en el servidor (Node). El navegador actúa únicamente como ejecutor mínimo de DOM.
 
-| Capa | Responsabilidad |
-|---|---|
+| Capa                         | Responsabilidad                                                                                   |
+|------------------------------|---------------------------------------------------------------------------------------------------|
 | **Librería (servidor Node)** | Define los tipos de test, genera los scripts del navegador, compara resultados, reporta PASS/FAIL |
-| **Proyecto (`.clue.js`)** | Declara de forma descriptiva qué se quiere testear |
-| **Navegador** | Ejecuta queries de DOM, recoge datos crudos, los envía al servidor |
+| **Proyecto (`.clue.js`)**    | Declara de forma descriptiva qué se quiere testear                                                |
+| **Navegador**                | Ejecuta queries de DOM, recoge datos crudos, los envía al servidor                                |
 
 ## Flujo de un test
 
@@ -81,7 +129,7 @@ module.exports = [
 
 ## Tipos de test genéricos (definidos en la librería)
 
->>> POR CORREGIR 
+>>> TODO POR CORREGIR
 Los tipos de test son responsabilidad de `ssr/`. Cada tipo sabe:
 - Qué query de DOM hay que hacer en el navegador para recoger el dato
 - Cómo comparar el dato recibido con el valor esperado
@@ -89,12 +137,12 @@ Los tipos de test son responsabilidad de `ssr/`. Cada tipo sabe:
 
 Ejemplos de tipos previstos:
 
-| Tipo | Qué recoge el navegador | Qué compara el servidor |
-|---|---|---|
-| `checkText` | `element.textContent` | igualdad de cadenas (trim) |
-| `isClickable` | `!element.disabled && element.offsetParent !== null` | booleano |
-| `isVisible` | `element.offsetParent !== null` | booleano |
-| `checkAttribute` | `element.getAttribute(attr)` | igualdad de cadenas |
+| Tipo             | Qué recoge el navegador                              | Qué compara el servidor    |
+|------------------|------------------------------------------------------|----------------------------|
+| `checkText`      | `element.textContent`                                | igualdad de cadenas (trim) |
+| `isClickable`    | `!element.disabled && element.offsetParent !== null` | booleano                   |
+| `isVisible`      | `element.offsetParent !== null`                      | booleano                   |
+| `checkAttribute` | `element.getAttribute(attr)`                         | igualdad de cadenas        |
 
 ## Separación cliente / librería
 

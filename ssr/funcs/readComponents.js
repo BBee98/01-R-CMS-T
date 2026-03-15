@@ -21,6 +21,7 @@ const node_childProcess = require("node:child_process");
  * TODO remove when convert into independent library
  */
 const sucrase = require(g__nodeModulesPath + "/sucrase");
+const {react__Mount} = require("./react__mount");
 
 /**
  *
@@ -28,61 +29,42 @@ const sucrase = require(g__nodeModulesPath + "/sucrase");
 
 async function Prepare__Components() {
     const fileComponents = await Get__Components();
-    return await Mount__Components(fileComponents);
+    // return await Mount__Components(fileComponents);
 }
 
 async function Get__Components() {
     const hasComponentsFile = !!g__envs.REPOSITORY_COMPONENTS_FILE;
-    const components = [];
 
     if (hasComponentsFile) {
         const componentsFolder = `${g__rootFile}/src/${g__envs.REPOSITORY_COMPONENTS_FOLDER}/${g__envs.REPOSITORY_COMPONENTS_FILE}`;
-        await Fetch__fileComponents(components, componentsFolder);
+        await Fetch__fileComponents(componentsFolder);
     } else {
         const componentsFolder = `${g__rootFile}/src/${g__envs.REPOSITORY_COMPONENTS_FOLDER}`;
-        await Fetch__folderComponents(components, componentsFolder);
+        await Fetch__folderComponents(componentsFolder);
     }
-    return components;
 }
 
-function Mount__Components(components) {
-    const componentsMounted = [];
-    return new Promise(async (resolve) => {
-        for (const component of components) {
-            await node_childProcess.execSync(`parcel build ${component} --dist-dir ssr/client/dist/components --no-source-maps`);
-            const fileWasCreated = g__node_fs.existsSync(component)
-            componentsMounted.push({
-                name: component.split('/').pop(),
-                fileWasCreated,
-            })
-        }
-        resolve(componentsMounted);
-    });
-}
-
-async function Fetch__folderComponents(components, componentsFolder) {
+async function Fetch__folderComponents(componentsFolder) {
 
     const files = await g__node_asyncFs.readdir(componentsFolder, {withFileTypes: true});
     if (!files || files?.length === 0) {
         throw new Error("No components found");
     }
-    return new Promise(async (resolve) => {
-        for (const file of files) {
-            if (file.isDirectory()) {
-                const componentFolder = `${file.parentPath}/${file.name}`;
-                const filesFromFolder = await g__node_asyncFs.readdir(componentFolder, {withFileTypes: true});
-                for (const f of filesFromFolder) {
-                    const { name } = f;
-                    if (name.endsWith(".tsx") || name.endsWith(".ts") || name.endsWith(".jsx") || name.endsWith(".js") || name.endsWith(".css")) {
-                        components.push({
-                            name,
-                        });
-                    }
+    for (const file of files) {
+        if (file?.isDirectory()) {
+            const componentFolder = `${file.parentPath}/${file.name}`;
+            const filesFromFolder = await g__node_asyncFs.readdir(componentFolder, {withFileTypes: true});
+            for (const f of filesFromFolder) {
+                const {name, parentPath} = f;
+                if (name.endsWith(".tsx") || name.endsWith(".ts") || name.endsWith(".jsx") || name.endsWith(".js") || name.endsWith(".css")) {
+                    react__Mount({
+                        fileName: name,
+                        componentFolder: parentPath,
+                    });
                 }
             }
         }
-        return resolve(components)
-    });
+    }
 }
 
 async function Fetch__fileComponents(components, componentsFolder) {
@@ -90,7 +72,7 @@ async function Fetch__fileComponents(components, componentsFolder) {
     // TODO instead of throwing an error at first attempt ask for fetch all directories
     const name = g__envs.REPOSITORY_COMPONENTS_FILE;
 
-    if(!g__node_fs.existsSync(componentsFolder)){
+    if (!g__node_fs.existsSync(componentsFolder)) {
         const errorMsg = `File ${name} do not exists.`
         if (name?.endsWith(".tsx") || name?.endsWith(".ts") || name?.endsWith(".jsx") || name?.endsWith(".js")) {
             throw new Error(errorMsg)
@@ -103,8 +85,9 @@ async function Fetch__fileComponents(components, componentsFolder) {
     if (file.length === 0) {
         throw new Error("No components found");
     }
-    components.push(componentsFolder);
+    react__Mount({fileName: name, componentFolder: componentsFolder});
 }
+
 
 module.exports = {
     Prepare__Components

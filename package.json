@@ -8,9 +8,9 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
+    "esbuild": "^0.27.4",
     "node": "^25.6.1",
     "nodemon": "^3.1.11",
-    "parcel": "^2.16.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sucrase": "^3.35.1",
@@ -21,8 +21,7 @@
     "build": "parcel build",
     "test": "jest",
     "lint": "eslint src",
-    "scrapping": "npm run build:js:globals && node ssr/index.js --env-file=.env",
-    "build:js:globals": "parcel build ssr/client/globals.js --dist-dir ssr/client/dist --no-source-maps"
+    "scrapping": "node ssr/index.js --env-file=.env"
   },
   "eslintConfig": {
     "extends": [
