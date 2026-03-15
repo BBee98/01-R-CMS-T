@@ -265,6 +265,189 @@ let node_process = require("node:process");
 let rootFile = process.cwd();
 ```
 
+# Renderizar un componente React en el browser con esbuild
+
+> ‼️ **IMPORTANTE** ‼️
+
+Para que un componente React aparezca en el browser hay **dos requisitos que deben cumplirse a la vez**. Si falta cualquiera de los dos, el componente no se renderiza.
+
+## 1. El HTML necesita un nodo donde montar React
+
+React no pinta nada en el `<body>` por sí solo. Necesita un elemento del DOM como punto de entrada:
+
+```html
+<body>
+    <div id="root"></div>
+</body>
+```
+
+Sin este `<div>`, `createRoot(document.getElementById('root'))` devuelve `null` y React lanza un error.
+
+> ‼️ **IMPORTANTE**: la etiqueta `<script>` debe tener `type="javascript"`. Sin él, el browser puede interpretarla como un módulo ES (`type="module"`) y activar resolución de imports nativa, lo que provocaría el error `Failed to resolve module specifier` incluso con el bundle correctamente generado:
+>
+> ```html
+> <script type="javascript">{{COMPONENT_SCRIPT}}</script>
+> ```
+
+## 2. El bundle debe incluir el código de mounting
+
+Cuando esbuild transpila un componente con `entryPoints`, **solo exporta el componente** — no lo monta.
+Si el script resultante no llama a `createRoot().render(...)`, el componente nunca aparece aunque el `<div id="root">` exista.
+
+**Solución:** usar la opción `stdin` de esbuild para inyectar el código de mounting dentro del propio bundle:
+
+```javascript
+const mountCode = `
+import Component from '.';
+import { createRoot } from 'react-dom/client';
+import React from 'react';
+createRoot(document.getElementById('root')).render(React.createElement(Component.default ?? Component, null));
+`;
+
+const transpiledCode = await esBuild.build({
+    stdin: {
+        contents: mountCode,
+        resolveDir: componentFolder, // carpeta del componente, resuelve el import '.'
+        loader: 'jsx',
+    },
+    loader: { '.js': 'jsx' },
+    bundle: true,
+    write: false,
+    platform: 'browser',
+    format: 'iife',
+});
+```
+
+Con `resolveDir: componentFolder`, el `import Component from '.'` resuelve al `index.js` de esa carpeta.
+El bundle resultante contiene React + el componente + el mounting en un único IIFE listo para el browser.
+
+> ☝️ `Component.default ?? Component` cubre tanto exports `default` como `module.exports` directos.
+
+## ☝️ El `loader` en esbuild aplica por fichero, no globalmente
+
+El `loader` le dice a esbuild **en qué formato está escrito el código de entrada** para que sepa cómo parsearlo.
+
+Cuando se usa `stdin`, pueden coexistir **dos loaders distintos** que aplican a ficheros distintos:
+
+```javascript
+const transpiledCode = await esBuild.build({
+    stdin: {
+        contents: mountCode,
+        resolveDir: componentFolder,
+        loader: 'js',        // ← el mountCode no tiene JSX, solo require() y createElement
+    },
+    loader: { '.js': 'jsx' }, // ← los .js que se encuentren al resolver dependencias sí son JSX
+    ...
+});
+```
+
+- **`stdin.loader: 'js'`** — aplica únicamente al código del `stdin`. Si ese código no tiene JSX, `js` es suficiente.
+- **`loader: { '.js': 'jsx' }`** — aplica a cualquier fichero `.js` que esbuild encuentre al resolver los `require`/`import` del bundle (es decir, los componentes). Como esos sí están escritos en JSX, necesitan este loader.
+
+Los dos conviven sin conflicto porque cada uno aplica a su propia entrada.
+
+## ☝️ El transform de JSX depende de la versión de React
+
+esbuild tiene dos modos de transformar JSX:
+
+| Opción `jsx` | React | Comportamiento |
+|---|---|---|
+| `'transform'` | < 17 | Transform clásico. Convierte JSX en `React.createElement(...)`. **Requiere `import React` en cada fichero que use JSX.** |
+| `'automatic'` | ≥ 17 | Nuevo transform. Usa `react/jsx-runtime` internamente. **No requiere `import React` en los componentes.** |
+
+Para detectar la versión en tiempo de ejecución y aplicar la configuración correcta:
+
+```javascript
+const React = require('react');
+
+const g__reactMajorVersion = parseInt(React.version.split('.')[0], 10);
+const g__jsxTransform = g__reactMajorVersion >= 17 ? 'automatic' : 'transform';
+
+esBuild.build({
+    // ...
+    jsx: g__jsxTransform,
+});
+```
+
+> ⚠️ Con `'transform'` (React < 17), si un componente usa JSX sin `import React from 'react'`, fallará en runtime con `React is not defined`.
+
+## ⚠️ Warning: inyectar el bundle en un template HTML con `String.replace`
+
+Al insertar el código transpilado por esbuild en un template HTML usando `String.replace`, pueden darse **dos errores silenciosos** que hacen que el placeholder no se reemplace:
+
+### 1. Los strings son inmutables en JavaScript
+
+`String.replace` **no muta** el string original, devuelve uno nuevo. Si no asignas el resultado, el cambio se pierde:
+
+```javascript
+// ❌ Mal — el resultado se descarta
+template.replace("{{COMPONENT_SCRIPT}}", code);
+return template; // sigue con el placeholder sin reemplazar
+
+// ✅ Bien — se encadena o se asigna
+const html = template.replace("{{COMPONENT_SCRIPT}}", () => code);
+return html;
+```
+
+### 2. El bundle de esbuild contiene `$` y rompe el reemplazo
+
+Cuando el segundo argumento de `replace` es un **string**, JavaScript interpreta secuencias como `$&`, `$'` o `$$` como patrones especiales de reemplazo. El output de esbuild contiene `$` habitualmente, lo que corrompe o trunca el resultado.
+
+La solución es pasar una **función** como replacer — las funciones no tienen esa interpretación especial:
+
+```javascript
+// ❌ Mal — el $ del bundle se interpreta como patrón
+template.replace("{{COMPONENT_SCRIPT}}", code);
+
+// ✅ Bien — la función evita la interpretación de $
+template.replace("{{COMPONENT_SCRIPT}}", () => code);
+```
+
+---
+
+## ☝️ Cómo depurar que el bundle llega al browser
+
+Cuando el componente no se renderiza y no hay error visible, el problema puede estar en cualquier punto del pipeline. La estrategia es añadir `console.log` en cada capa para aislar dónde falla:
+
+**Lado servidor** — confirmar que el bundle se genera y llega al template:
+```javascript
+// En react__mount.js
+console.info("[react__mount] Bundle generado. Tamaño:", bundleText.length, "chars");
+console.info("[react__mount] Preview:", bundleText.slice(0, 300));
+
+// En renderComponents.js
+console.info("[renderComponents] Nº de componentes:", script.length);
+console.info("[renderComponents] HTML generado. ¿Contiene bundle?", !html.includes("{{COMPONENT_SCRIPT}}"));
+```
+
+**Lado browser** — añadir logs dentro del propio `mountCode` para que se ejecuten dentro del bundle:
+```javascript
+const mountCode = `
+// ...
+console.log('[cluebee] Component:', Component);
+console.log('[cluebee] Root element:', document.getElementById('root'));
+createRoot(document.getElementById('root')).render(React.createElement(Component, null));
+console.log('[cluebee] render() llamado');
+`;
+```
+
+> ☝️ Los logs del servidor aparecen en la terminal. Los del browser aparecen en **DevTools > Console**.
+
+## ⚠️ Warning: `readdir` devuelve ficheros en orden alfabético
+
+`fs.readdir` no garantiza ningún orden concreto, pero en la práctica devuelve los directorios **por orden alfabético**. Esto significa que `script[0]` no es necesariamente el componente que esperas — si `Accordion` existe junto a `Button`, será siempre el primero.
+
+Acceder a un índice fijo (`script[0]`, `script[1]`) es frágil. La solución es **iterar sobre todos los scripts** y generar un string concatenado:
+
+```javascript
+const allScripts = script.map(s => s.code).join('\n');
+return template.replace("{{COMPONENT_SCRIPT}}", () => allScripts);
+```
+
+Cada bundle es un IIFE autocontenido, por lo que concatenarlos no genera conflictos de variables entre componentes.
+
+---
+
 # Protocolos IPC vs IPC
 
 

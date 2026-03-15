@@ -9,7 +9,8 @@ const {readComponents: c, readEnvs: e, renderComponents: r} = require('./funcs')
 
     const server = node_http.createServer(async (request, response) => {
         response.setHeader('Content-Type', 'text/html');
-        response.end(JSON.stringify(components));
+        const html = await r.Generate__ComponentHTML({script: components});
+            response.end(html);
     });
 
     await server.listen(4998);
