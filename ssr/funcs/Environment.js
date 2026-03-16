@@ -1,18 +1,13 @@
 const {ENVIRONMENTS, OPTIONAL_ENVIRONMENTS} = require("../core/constants");
 
-const g__node_process = require("node:process");
-const g__node_asyncFs = require("node:fs/promises");
-const g__rootFile = g__node_process.cwd();
+const {g__envs, g__node_process, g__node_asyncFs, g__rootFile   } = require("./constants")
 
-const g__envs = Object.create({});
-
-
-async function Prepare__Environment() {
-    const envFile = Get__envFile();
-    await Read__envFile(envFile);
+async function Prepare() {
+    const envFile = getVariables();
+    await readVariables(envFile);
 }
 
-function Get__envFile() {
+function getVariables() {
     let envs = g__node_process.argv;
     let envFile = envs.find(arg => arg.startsWith("--env-file="));
     if (!envFile) {
@@ -26,7 +21,7 @@ function Get__envFile() {
     return `${g__rootFile}/${envFileName}`;
 }
 
-async function Read__envFile(envFile) {
+async function readVariables(envFile) {
     let content = await g__node_asyncFs.readFile(envFile, "utf-8");
     const envsFromContent = content.replace(/[\r\n]+/g, ' ').split(" ");
     envsFromContent.forEach(env => {
@@ -56,7 +51,5 @@ async function Read__envFile(envFile) {
 }
 
 module.exports = {
-    Prepare__Environment,
-    g__envs,
-    g__rootFile
+    Prepare
 };

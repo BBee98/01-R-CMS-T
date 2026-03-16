@@ -1,3 +1,5 @@
+const { onClick } = require('./Events')
+
 const test__Button = (element) => {
   const children = element.props?.children
 
@@ -15,3 +17,5 @@ const test__Button = (element) => {
 
   return onClick(element)
 }
+
+module.exports = { test__Button }

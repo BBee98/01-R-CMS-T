@@ -12,3 +12,5 @@ const onClick = (element) => {
     return { pass: false, reason: error.message }
   }
 }
+
+module.exports = { onClick }

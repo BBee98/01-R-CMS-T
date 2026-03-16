@@ -411,7 +411,7 @@ Cuando el componente no se renderiza y no hay error visible, el problema puede e
 
 **Lado servidor** — confirmar que el bundle se genera y llega al template:
 ```javascript
-// En react__mount.js
+// En Transpile.js
 console.info("[react__mount] Bundle generado. Tamaño:", bundleText.length, "chars");
 console.info("[react__mount] Preview:", bundleText.slice(0, 300));
 

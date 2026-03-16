@@ -1,5 +1,6 @@
-const readEnvs = require('./readEnvs');
-const readComponents = require('./readComponents');
-const renderComponents = require('./renderComponents');
+const Constants = require('./constants');
+const Component = require('./Component');
+const Fetch = require('./Fetch');
+const Environment = require('./Environment');
 
-module.exports = { readEnvs, readComponents, renderComponents };
+module.exports = { Constants, Component, Environment, Fetch };
