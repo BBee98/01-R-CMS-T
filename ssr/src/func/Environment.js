@@ -1,4 +1,4 @@
-const {ENVIRONMENTS, OPTIONAL_ENVIRONMENTS} = require("../core/constants");
+const {ENVIRONMENTS, OPTIONAL_ENVIRONMENTS} = require("../../core/constants");
 
 const {g__envs, g__node_process, g__node_asyncFs, g__rootFile   } = require("./constants")
 

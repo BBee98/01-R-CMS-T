@@ -1,7 +1,7 @@
 let node_http = require("node:http");
 let node_childProcess = require("node:child_process");
 
-const { Environment, Component} = require('./funcs');
+const { Environment, Component} = require('./func');
 
 (async function Start() {
     await Environment.Prepare();

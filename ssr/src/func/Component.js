@@ -16,7 +16,7 @@ async function Get() {
 }
 
 async function toHTML({script}) {
-    const templatePath = g__nodePath.join(__dirname, "../templates/component.html");
+    const templatePath = g__nodePath.join(__dirname, "../templates/index.html");
     const template = await g__node_asyncFs.readFile(templatePath, { encoding: "utf-8" });
 
     const allScripts = script.map(s => s.code).join('\n');
