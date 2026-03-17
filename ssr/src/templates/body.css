@@ -1,0 +1,21 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    display: flex;
+    height: 100vh;
+    font-family: monospace;
+    background: #fff;
+    color: #111;
+    overflow: hidden;
+}
+
+#main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 32px;
+}
+
+#root { width: 100%; }

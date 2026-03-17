@@ -4,137 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{COMPONENT_NAME}}</title>
-    <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            display: flex;
-            height: 100vh;
-            font-family: monospace;
-            background: #fff;
-            color: #111;
-            overflow: hidden;
-        }
-
-        #sidebar {
-            width: 260px;
-            min-width: 120px;
-            max-width: 600px;
-            display: flex;
-            flex-direction: column;
-            background: #111;
-            border-right: 1px solid #222;
-            overflow: hidden;
-            flex-shrink: 0;
-        }
-
-        #sidebar-header {
-            padding: 12px 16px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: #555;
-            border-bottom: 1px solid #1e1e1e;
-            user-select: none;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        #summary-badge {
-            display: none;
-            font-size: 11px;
-            font-weight: bold;
-            letter-spacing: 0.08em;
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-        #summary-badge.pass { background: #0d2618; color: #2ea043; }
-        #summary-badge.fail { background: #2d0f0f; color: #f85149; }
-
-        #test-list {
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .component-block { border-bottom: 1px solid #1e1e1e; }
-
-        .component-name {
-            padding: 8px 16px 6px;
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: #888;
-            user-select: none;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 12px;
-            margin-bottom: 4px;
-        }
-
-        thead th {
-            padding: 4px 16px;
-            text-align: left;
-            font-size: 10px;
-            color: #444;
-            font-weight: normal;
-            border-bottom: 1px solid #1e1e1e;
-        }
-
-        tbody tr { transition: background 0.1s; }
-        tbody tr:hover { background: #1a1a1a; }
-
-        td {
-            padding: 6px 16px;
-            vertical-align: middle;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        td.td-status { width: 28px; padding-right: 4px; }
-        td.td-name   { max-width: 0; width: 100%; }
-        td.td-badge  { width: 48px; text-align: right; }
-
-        .badge {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 3px;
-            font-size: 10px;
-            font-weight: bold;
-            letter-spacing: 0.04em;
-        }
-        .badge.pass    { background: #0d2618; color: #2ea043; }
-        .badge.fail    { background: #2d0f0f; color: #f85149; }
-        .badge.pending { background: #1e1e1e; color: #555; }
-
-        .icon.pass    { color: #2ea043; }
-        .icon.fail    { color: #f85149; }
-        .icon.pending { color: #444; }
-
-        #resizer {
-            width: 5px;
-            cursor: col-resize;
-            background: #1a1a1a;
-            flex-shrink: 0;
-            transition: background 0.15s;
-        }
-        #resizer:hover, #resizer.dragging { background: #3a3a3a; }
-
-        #main {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: auto;
-            padding: 32px;
-        }
-
-        #root { width: 100%; }
-    </style>
+    <link rel="stylesheet" href="body.css">
+    <link rel="stylesheet" href="sidebar.css">
 </head>
 <body>
 
@@ -152,33 +23,9 @@
     <div id="root"></div>
 </main>
 
+<script src="resizeSidebar.js"></script>
+
 <script>
-    // --- Resizable sidebar ---
-    const resizer  = document.getElementById('resizer');
-    const sidebar  = document.getElementById('sidebar');
-    let dragging = false, startX, startW;
-
-    resizer.addEventListener('mousedown', e => {
-        dragging = true;
-        startX = e.clientX;
-        startW = sidebar.offsetWidth;
-        resizer.classList.add('dragging');
-        document.body.style.userSelect = 'none';
-    });
-
-    document.addEventListener('mousemove', e => {
-        if (!dragging) return;
-        const w = Math.min(Math.max(startW + e.clientX - startX, 120), 600);
-        sidebar.style.width = w + 'px';
-    });
-
-    document.addEventListener('mouseup', () => {
-        if (!dragging) return;
-        dragging = false;
-        resizer.classList.remove('dragging');
-        document.body.style.userSelect = '';
-    });
-
     // --- Test list API (called by test runner) ---
     // Usage: window.Cluebee.report({ component: 'Button', name: 'has text', status: 'pass' | 'fail' | 'pending' })
     window.Cluebee = {
