@@ -1,4 +1,4 @@
-const {ENVIRONMENTS, OPTIONAL_ENVIRONMENTS} = require("../../core/constants");
+const {ENVIRONMENTS, OPTIONAL_ENVIRONMENTS, OPTIONAL_ENVIRONMENTS_DEFAULTS, OPTIONAL_ENVIRONMENTS_ALLOWED_VALUES} = require("../../core/constants");
 
 const {g__envs, g__node_process, g__node_asyncFs, g__rootFile   } = require("./constants")
 
@@ -45,6 +45,25 @@ async function readVariables(envFile) {
             }
         }
     })
+    for (const [key, allowed] of Object.entries(OPTIONAL_ENVIRONMENTS_ALLOWED_VALUES)) {
+        if (g__envs[key] !== undefined && !allowed.includes(g__envs[key])) {
+            const defaultValue = OPTIONAL_ENVIRONMENTS_DEFAULTS[key];
+            console.warn(
+                `[Cluebee] Warning: "${g__envs[key]}" is not a valid value for ${key}.\n` +
+                `  Received:  ${g__envs[key]}\n` +
+                `  Allowed:   ${allowed.join(', ')}\n` +
+                `  Applying default value: ${defaultValue}`
+            );
+            Object.assign(g__envs, { [key]: defaultValue });
+        }
+    }
+
+    for (const [key, defaultValue] of Object.entries(OPTIONAL_ENVIRONMENTS_DEFAULTS)) {
+        if (g__envs[key] === undefined) {
+            Object.assign(g__envs, { [key]: defaultValue });
+        }
+    }
+
     Object.assign(g__envs, {
         URL_COMPONENTS_FOLDER: `${g__rootFile}/src/${g__envs.REPOSITORY_COMPONENTS_FOLDER}`,
     })

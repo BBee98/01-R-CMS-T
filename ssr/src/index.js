@@ -1,9 +1,8 @@
-let node_http = require("node:http");
-let node_childProcess = require("node:child_process");
 let node_path = require("node:path");
 let node_fs = require("node:fs/promises");
 
-const { Environment, Component} = require('./func');
+const { Environment, Component } = require('./func');
+const { Serve } = require('../core/run');
 
 const MIME = {
     '.css': 'text/css',
@@ -16,7 +15,7 @@ const TEMPLATES_DIR = node_path.join(__dirname, 'templates');
     await Environment.Prepare();
     const components = await Component.Get();
 
-    const server = node_http.createServer(async (request, response) => {
+    await Serve(async (request, response) => {
         const ext = node_path.extname(request.url);
 
         if (MIME[ext]) {
@@ -35,7 +34,4 @@ const TEMPLATES_DIR = node_path.join(__dirname, 'templates');
         const html = await Component.toHTML({script: components});
         response.end(html);
     });
-
-    await server.listen(4998);
-    node_childProcess.exec("open http://localhost:4998");
 })();

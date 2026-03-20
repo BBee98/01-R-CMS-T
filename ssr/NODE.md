@@ -448,6 +448,56 @@ Cada bundle es un IIFE autocontenido, por lo que concatenarlos no genera conflic
 
 ---
 
+# Variable de entorno HEADLESS
+
+La variable `HEADLESS` es **opcional** y controla si el servidor se levanta en modo headless (sin abrir el navegador).
+
+| Valor | Comportamiento |
+|---|---|
+| `true` / `1` | Modo headless — levanta el servidor pero **no abre el navegador** |
+| `false` / `0` | Modo normal — levanta el servidor **y abre el navegador** |
+
+Si no se define, el valor por defecto es `0` (modo normal).
+
+## Dónde se declara
+
+- **`ssr/core/constants.js`** — `HEADLESS` está en `OPTIONAL_ENVIRONMENTS`, con su valor por defecto en `OPTIONAL_ENVIRONMENTS_DEFAULTS` y sus valores permitidos en `OPTIONAL_ENVIRONMENTS_ALLOWED_VALUES`.
+
+## Validación
+
+La validación ocurre en dos puntos:
+
+1. **`ssr/src/func/Environment.js`** — al leer el fichero `.env`, comprueba que el valor esté dentro de los valores permitidos. Si no lo está, lanza un error.
+2. **`ssr/core/run.js`** — antes de levantar el servidor, comprueba de nuevo el valor de `HEADLESS`. Si es inválido, **no lanza error**: emite un `console.warn` indicando el valor recibido y los valores permitidos, y continúa en modo normal.
+
+```
+[Cluebee] Warning: HEADLESS has an unexpected value "yes". Allowed values: true, false, 1, 0.
+```
+
+## Flujo en `ssr/core/run.js`
+
+`Serve(requestHandler)` delega en `ServeHeadless` cuando detecta modo headless:
+
+```javascript
+async function Serve(requestHandler) {
+    if (isHeadless()) {
+        await ServeHeadless(requestHandler);  // levanta servidor, no abre browser
+        return;
+    }
+
+    // flujo por defecto: servidor + apertura del navegador
+}
+```
+
+`ServeHeadless` únicamente levanta el servidor HTTP en el puerto `4998` sin ninguna interacción con el navegador.
+
+## Uso en el fichero `.env`
+
+```dotenv
+REPOSITORY_COMPONENTS_FOLDER="components"
+HEADLESS=1
+```
+
 # Protocolos IPC vs IPC
 
 
